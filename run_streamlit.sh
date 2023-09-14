@@ -1,0 +1,1 @@
+streamlit run ./streamlit_example.py
