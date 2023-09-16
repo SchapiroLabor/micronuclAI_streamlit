@@ -15,7 +15,7 @@ nuclei_image = st.file_uploader(
     "Upload a nuclear staining file:", accept_multiple_files=False, key="nuclei_image")
 mask_image = st.file_uploader(
     "Upload a nuclear mask file:", accept_multiple_files=False, key="nuclei_mask")
-model_file = "../data/model_4.pt"
+model_file = "./model_4.pt"
 
 # Test 1: Does the inference work when given hard paths for input files?
 # WORKS!
@@ -58,7 +58,7 @@ if st.button("Run the script"):
 
     # If the inference has been run once, show the download buttons
     if pipeline_ex == 1:
-        with open("../results/"+pred_out) as f:
+        with open("/results/"+pred_out) as f:
             st.download_button('Download predictions:', f, 'text/csv')
-        with open("../results/"+sum_out) as s:
+        with open("/results/"+sum_out) as s:
             st.download_button('Download summary:', s, 'text/csv')
