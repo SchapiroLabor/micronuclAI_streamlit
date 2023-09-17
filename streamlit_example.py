@@ -15,7 +15,7 @@ nuclei_image = st.file_uploader(
     "Upload a nuclear staining file:", accept_multiple_files=False, key="nuclei_image")
 mask_image = st.file_uploader(
     "Upload a nuclear mask file:", accept_multiple_files=False, key="nuclei_mask")
-model_file = "./model_4.pt"
+model_file = "/models/model_4.pt"
 
 # Test 1: Does the inference work when given hard paths for input files?
 # WORKS!
@@ -48,7 +48,7 @@ if st.button("Run the script"):
                     "-m", temp_maskimage.name,
                     "-mod", model_file,
                     "-d", "mps",
-                    "-o", "../results"])
+                    "-o", "/results"])
     # Get only the filename without path ffrom temp_maskimage and add _predictions.csv
     output_prefix = temp_maskimage.name.split('/')[-1]
     st.write(temp_maskimage.name)
