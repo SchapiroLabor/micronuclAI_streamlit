@@ -4,6 +4,7 @@ import numpy as np
 import subprocess
 import sys
 import tempfile
+import os
 
 st.title('Perform micronulcei inference')
 st.subheader(
@@ -49,10 +50,12 @@ if st.button("Run the script"):
                     "-mod", model_file,
                     "-d", "mps",
                     "-o", "/results"])
-    # Get only the filename without path ffrom temp_maskimage and add _predictions.csv
+    # Get only the filename without path from temp_maskimage and add _predictions.csv
     output_prefix = temp_maskimage.name.split('/')[-1]
     st.write(temp_maskimage.name)
     st.write(output_prefix)
+    files = os.listdir("/app")
+    st.write(files)
     pred_out = "cin_inference_predictions.csv"
     sum_out = "cin_inference_summary.csv"
 
