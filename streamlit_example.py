@@ -41,26 +41,27 @@ if mask_image is not None:
     # temp_maskimage.name = 'mask.tif'
     temp_maskimage.write(mask_image.getbuffer())
 
+if 'count' not in st.session_state:
+    st.session_state.count = 0
+
 if st.button("Run the script"):
-    pipeline_ex = 1
     subprocess.run([f"{sys.executable}",
                     "prediction2.py",
                     "-i", temp_nucimage.name,
                     "-m", temp_maskimage.name,
                     "-mod", model_file,
-                    "-d", "mps",
+                    "-d", "cpu",
                     "-o", "/results"])
     # Get only the filename without path from temp_maskimage and add _predictions.csv
     output_prefix = temp_maskimage.name.split('/')[-1]
-    st.write(temp_maskimage.name)
-    st.write(output_prefix)
-    files = os.listdir("/app")
-    st.write(files)
     pred_out = "cin_inference_predictions.csv"
     sum_out = "cin_inference_summary.csv"
 
+    st.session_state.count += 1
+
     # If the inference has been run once, show the download buttons
-    if pipeline_ex == 1:
+    if st.session_state.count > 0:
+        st.subheader("Download predictions:")
         with open("/results/"+pred_out) as f:
             st.download_button('Download predictions:', f, 'text/csv')
         with open("/results/"+sum_out) as s:
