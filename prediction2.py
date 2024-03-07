@@ -51,7 +51,7 @@ def get_args():
                          help="Device to be used for training [default='cpu']")
     options.add_argument("-bs", "--batch_size", dest="batch_size", action="store", required=False, default=32,
                          type=int, help="Batch size for training. [Default = 32]")
-    options.add_argument("-w", "--workers", dest="workers", action="store", required=False, default=8,
+    options.add_argument("-w", "--workers", dest="workers", action="store", required=False, default=1,
                          type=int, help="Number of workers for training. [Default = 8]")
 
     # Tool output
