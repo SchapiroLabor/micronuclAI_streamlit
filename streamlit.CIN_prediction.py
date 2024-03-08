@@ -14,7 +14,7 @@ import plotly.express as px
 
 # Load an image from the file system (assumed to be in the same folder as this script).
 logo = Image.open('logo.png')
-gif_path = './waiting.gif'
+gif_path = './animation_micronuclei.gif'
 
 # Use the full page instead of a narrow central column
 st.set_page_config(layout="wide")
@@ -148,39 +148,58 @@ if submit_button:
         st.plotly_chart(fig, use_container_width=True)
         #st.write("This plot shows the distribution of micronuclei.")
 
-        with open("./results/"+pred_out) as f:
-            st.download_button('Download predictions', f, 'text/csv')
-
     with col2:
         st.subheader("Summary Table")
         micro_sum = pd.read_csv("./results/"+sum_out)
-        st.table(micro_sum)
-        with open("./results/"+sum_out) as s:
-            st.download_button('Download summary', s, 'text/csv')
+        st.dataframe(micro_sum)
 
-    # Scatterplot placeholder.
-    st.header("Scatterplot of nuclei positions")
-    # Generate test data with some points in x and y space with 20 points in each group and color them differently
-    np.random.seed(0)
-    x = np.random.randn(100)
-    y = np.random.randn(100)
-    group = np.random.choice(['A', 'B'], 100)
-    nuclei_pos = pd.DataFrame(dict(x=x, y=y, group=group))
-    nuclei_pos["group"] = nuclei_pos["group"].astype(str)
-    # Plot a plotly plot for df nuclei_pos with x and y as x and y and group as color, with color palette tab10
-    fig = px.scatter(nuclei_pos, x='x', y='y', color='group', template="simple_white")
-    st.plotly_chart(fig, use_container_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        c1,c2,c3 = st.columns(3)
+        with c2:
+            with open("./results/"+pred_out) as f:
+                st.download_button('Download predictions', f, 'text/csv')
+    with col2:
+        c1,c2,c3 = st.columns(3)
+        with c2:
+            with open("./results/"+sum_out) as s:
+                st.download_button('Download summary', s, 'text/csv')
+        
 
-    st.session_state.count += 1
+    # # Scatterplot placeholder.
+    # st.header("Scatterplot of nuclei positions")
+    # # Generate test data with some points in x and y space with 20 points in each group and color them differently
+    # np.random.seed(0)
+    # x = np.random.randn(100)
+    # y = np.random.randn(100)
+    # group = np.random.choice(['A', 'B'], 100)
+    # nuclei_pos = pd.DataFrame(dict(x=x, y=y, group=group))
+    # nuclei_pos["group"] = nuclei_pos["group"].astype(str)
 
-#### Old code
-# Test 1: Does the inference work when given hard paths for input files?
-# WORKS!
-# if st.button("Run the script"):
-#     subprocess.run([f"{sys.executable}",
-#                     "prediction2.py",
-#                     "-i", "../data/24h_combined_071023-01-Stitching-03_s07.ome.tif",
-#                     "-m", "../data/24h_combined_071023-01-Stitching-03_s07.MASK.16bit.tif",
-#                     "-mod", model_file,
-#                     "-d", "mps",
-#                     "-o", "../results"])
+    # ## Plot nuclei positions with image in background to explore micronuclei predictions
+    # fig = px.scatter(nuclei_pos, x='x', y='y', color='group', template="simple_white")
+    # img = data.astronaut()
+    # fig = px.imshow(img, color_continuous_scale='viridis')
+    # st.plotly_chart(fig, use_container_width=True)
+
+    # st.session_state.count += 1
+
+# ## Plot nuclei positions with image in background to explore micronuclei predictions
+# from skimage import data
+# import plotly.graph_objects as go
+# from skimage import io
+
+# #fig = px.scatter(nuclei_pos, x='x', y='y', color='group', template="simple_white")
+# img = data.camera()
+# # Read a tif image
+# img = io.imread("/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/24h_combined_071023-01-Stitching-03_s07.ome.tif")
+# centers = pd.read_csv("/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/id_centers.txt")
+
+# fig = px.imshow(img,binary_string=True, width = 800, height = 800)
+# fig.update_layout(coloraxis_showscale=False)
+# #fig.update_xaxes(showticklabels=False)
+# #fig.update_yaxes(showticklabels=False)
+# st.plotly_chart(fig, use_container_width=False)
+
+# st.session_state.count += 1
+# ################
