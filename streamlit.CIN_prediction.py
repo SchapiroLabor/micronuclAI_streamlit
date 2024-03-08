@@ -69,7 +69,12 @@ st.image(logo, use_column_width=True)
 
 # Section to explain how to use the app.
 st.title("How to use this app")
-st.write("This app is a showcase for MicronuclAI allows you to test our pretrained model with your own small test data.")
+col1, col2 = st.columns(2)
+with col1:
+    st.write("This app is a showcase for MicronuclAI allows you to test our pretrained model with your own small test data.")
+with col2:
+    with open('/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/micronuclAI_testdata.tar.gz', 'rb') as f:
+        st.download_button('Download test data', f, file_name='micronuclAI_testdata.tar.gz') 
 
 # Define input files
 col1, col2, col3 = st.columns(3)
