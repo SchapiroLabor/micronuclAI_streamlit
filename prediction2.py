@@ -44,15 +44,14 @@ def get_args():
     options.add_argument("-e", "--expansion", dest="expansion", action="store", required=False, default=25,
                          type=int, help="Expansion factor for images. [Default = 25]")
     options.add_argument("-p", "--precision", dest="precision", action="store", default="32",
-                         choices=["16-mixed", "bf16-mixed",
-                                  "16-true", "bf16-true", "32", "64"],
-                         help="Precision for training. [Default = bf16-mixed]")
+                        choices=["16-mixed", "bf16-mixed", "16-true", "bf16-true", "32", "64"],
+                        help="Precision for training. [Default = bf16-mixed]")
     options.add_argument("-d", "--device", dest="device", action="store", required=False, default="cpu",
                          help="Device to be used for training [default='cpu']")
     options.add_argument("-bs", "--batch_size", dest="batch_size", action="store", required=False, default=32,
                          type=int, help="Batch size for training. [Default = 32]")
-    options.add_argument("-w", "--workers", dest="workers", action="store", required=False, default=1,
-                         type=int, help="Number of workers for training. [Default = 8]")
+    options.add_argument("-w", "--workers", dest="workers", action="store", required=False, default=0,
+                         type=int, help="Number of workers for training. [Default = 0]")
 
     # Tool output
     output = parser.add_argument_group(title="Output")
@@ -72,8 +71,7 @@ def get_args():
 
 def summarize(df_predictions):
     # Get micronuclei counts
-    df_predictions["micronuclei"] = df_predictions["score"].apply(
-        lambda x: round(x) if x > 0.5 else 0)
+    df_predictions["micronuclei"] = df_predictions["score"].apply(lambda x: round(x) if x > 0.5 else 0)
 
     # Get dataset summary
     print("Calculating summary.")
@@ -107,8 +105,7 @@ def main(args):
                          accelerator=args.device)
 
     # Load data transformations
-    transform = get_transforms(
-        resize=args.size, training=False, prediction=True)
+    transform = get_transforms(resize=args.size, training=False, prediction=True)
 
     # Dataset
     print(f"Loading image from = {args.image}")
@@ -122,8 +119,7 @@ def main(args):
 
     # Dataloader
     print(f"Batch size         = {args.batch_size}")
-    dataloader = DataLoader(dataset, num_workers=args.workers,
-                            pin_memory=True, batch_size=args.batch_size)
+    dataloader = DataLoader(dataset, num_workers=args.workers, pin_memory=True, batch_size=args.batch_size)
 
     #  Getting predictions
     print("Predicting.")
@@ -144,10 +140,9 @@ def main(args):
     # Save output file
     print("Finished prediction. Saving output file.")
     args.out.mkdir(parents=True, exist_ok=True)
-    df_predictions.to_csv(args.out.joinpath(
-        f"{args.mask.stem}_predictions.csv"), index=False)
-    df_summary.to_csv(args.out.joinpath(
-        f"{args.mask.stem}_summary.csv"), index=True)
+    df_predictions.to_csv(args.out.joinpath(f"{args.mask.stem}_predictions.csv"), index=False)
+    df_summary.to_csv(args.out.joinpath(f"{args.mask.stem}_summary.csv"), index=True)
+
 
 
 if __name__ == "__main__":
