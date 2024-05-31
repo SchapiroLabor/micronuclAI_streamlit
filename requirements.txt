@@ -1,8 +1,7 @@
 mask2bbox==0.0.20
 numpy==1.26.4
 pandas==2.2.2
-Pillow==9.5.0
-Pillow==10.3.0
+Pillow
 plotly==5.19.0
 pytorch_lightning==2.0.9
 streamlit==1.26.0
