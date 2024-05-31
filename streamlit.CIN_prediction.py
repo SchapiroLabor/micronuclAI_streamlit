@@ -73,8 +73,8 @@ col1, col2 = st.columns(2)
 with col1:
     st.write("This app is a showcase for MicronuclAI allows you to test our pretrained model with your own small test data.")
 with col2:
-    with open('/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/micronuclAI_testdata.tar.gz', 'rb') as f:
-        st.download_button('Download test data', f, file_name='micronuclAI_testdata.tar.gz') 
+    with open('testdata.tar.gz', 'rb') as f:
+        st.download_button('Download test data', f, file_name='testdata.tar.gz') 
 
 # Define input files
 col1, col2, col3 = st.columns(3)
@@ -92,7 +92,7 @@ with col3:
     submit_button = st.button("Run the script", key="submit_button_key")
 
 ## Inference model file
-model_file = "/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/cin_models/model_4.pt"
+model_file = "micronuclai.pt"
 
 # Test 2: How to derive file paths from file uploads?
 if nuclei_image is not None:
@@ -169,42 +169,5 @@ if submit_button:
         with c2:
             with open("./results/"+sum_out) as s:
                 st.download_button('Download summary', s, 'text/csv')
-        
 
-    # # Scatterplot placeholder.
-    # st.header("Scatterplot of nuclei positions")
-    # # Generate test data with some points in x and y space with 20 points in each group and color them differently
-    # np.random.seed(0)
-    # x = np.random.randn(100)
-    # y = np.random.randn(100)
-    # group = np.random.choice(['A', 'B'], 100)
-    # nuclei_pos = pd.DataFrame(dict(x=x, y=y, group=group))
-    # nuclei_pos["group"] = nuclei_pos["group"].astype(str)
 
-    # ## Plot nuclei positions with image in background to explore micronuclei predictions
-    # fig = px.scatter(nuclei_pos, x='x', y='y', color='group', template="simple_white")
-    # img = data.astronaut()
-    # fig = px.imshow(img, color_continuous_scale='viridis')
-    # st.plotly_chart(fig, use_container_width=True)
-
-    # st.session_state.count += 1
-
-# ## Plot nuclei positions with image in background to explore micronuclei predictions
-# from skimage import data
-# import plotly.graph_objects as go
-# from skimage import io
-
-# #fig = px.scatter(nuclei_pos, x='x', y='y', color='group', template="simple_white")
-# img = data.camera()
-# # Read a tif image
-# img = io.imread("/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/24h_combined_071023-01-Stitching-03_s07.ome.tif")
-# centers = pd.read_csv("/Users/florian_wuennemann/1_Projects/Miguel_CIN_streamlit/data/id_centers.txt")
-
-# fig = px.imshow(img,binary_string=True, width = 800, height = 800)
-# fig.update_layout(coloraxis_showscale=False)
-# #fig.update_xaxes(showticklabels=False)
-# #fig.update_yaxes(showticklabels=False)
-# st.plotly_chart(fig, use_container_width=False)
-
-# st.session_state.count += 1
-# ################
