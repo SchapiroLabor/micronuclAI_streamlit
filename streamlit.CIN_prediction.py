@@ -123,7 +123,7 @@ if submit_button:
                         "-i", temp_nucimage.name,
                         "-m", temp_maskimage.name,
                         "-mod", model_file,
-                        "-d", "mps",
+                        "-d", "cpu",
                         "-o", "./results"])
             # Clear the GIF
             placeholder.empty()
