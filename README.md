@@ -2,7 +2,9 @@
 
 ![logo.png](logo.png)
 
-This repository contains the code needed to spin up a streamlit app for CIN inference.
+This repository contains the code needed to spin up a streamlit app for CIN inference.  
+
+https://micronuclai.streamlit.app
 
 Test data and model are provided also in the repository.
 
