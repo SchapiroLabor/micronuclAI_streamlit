@@ -21,7 +21,7 @@ from augmentations import get_transforms
 
 def get_args():
     # Script description
-    description = """Predits the probability of occurence of micronuclei in the cropped images in the input folder."""
+    description = """Predicts the probability of occurence of micronuclei in the cropped images in the input folder."""
 
     # Add parser
     parser = argparse.ArgumentParser(description)
