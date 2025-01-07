@@ -71,7 +71,9 @@ st.image(logo, use_column_width=True)
 st.title("How to use this app")
 col1, col2 = st.columns(2)
 with col1:
-    st.write("This app is a showcase for MicronuclAI, it allows you to test our pretrained model with your own small test data.\n For larger datasets please refer to the micronuclAI tool and try it locally on your machine. \n Check it out at: https://github.com/SchapiroLabor/micronuclAI")
+    st.write("This app is a showcase for MicronuclAI, it allows you to test our pretrained model with your own small test data")
+    st.write("For larger datasets please refer to the micronuclAI tool and try it locally on your machine.")
+    st.write("Check it out at: https://github.com/SchapiroLabor/micronuclAI")
 with col2:
     with open('testdata.tar.gz', 'rb') as f:
         st.download_button('Download test data', f, file_name='testdata.tar.gz') 
