@@ -1,22 +1,22 @@
 import argparse
 import time
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torchvision
+from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import pytorch_lightning as pl
-from PIL import Image
-import numpy as np
-import pandas as pd
-from pathlib import Path
 from tqdm import tqdm
+
+from augmentations import get_transforms
 from augmentations import preprocess_test as preprocess
 from dataset import CINPrediction
-from torch.utils.data import DataLoader
-from models import (EfficientNetClassifier, MulticlassRegression)
-from augmentations import get_transforms
+from models import EfficientNetClassifier, MulticlassRegression
 
 
 def get_args():
@@ -28,35 +28,113 @@ def get_args():
 
     # Tool Input
     input = parser.add_argument_group(title="Input")
-    input.add_argument("-i", "--image", dest="image", action="store", required=True,
-                       help="Pathway to image.")
-    input.add_argument("-m", "--mask", dest="mask", action="store", required=True,
-                       help="Pathway to mask.")
-    input.add_argument("-mod", "--model", dest="model", action="store", required=True,
-                       help="Pathway to prediction model.")
+    input.add_argument(
+        "-i",
+        "--image",
+        dest="image",
+        action="store",
+        required=True,
+        help="Pathway to image.",
+    )
+    input.add_argument(
+        "-m",
+        "--mask",
+        dest="mask",
+        action="store",
+        required=True,
+        help="Pathway to mask.",
+    )
+    input.add_argument(
+        "-mod",
+        "--model",
+        dest="model",
+        action="store",
+        required=True,
+        help="Pathway to prediction model.",
+    )
 
     # Optional input
     options = parser.add_argument_group(title="Non-required arguments")
-    options.add_argument("-s", "--size", dest="size", action="store", required=False, default=(256, 256),
-                         type=int, nargs="+", help="Size of images for training. [Default = (256, 256)]")
-    options.add_argument("-rf", "--resizing_factor", dest="resizing_factor", action="store", required=False,
-                         default=0.6, type=float, help="Resizing factor for images. [Default = 0.6]")
-    options.add_argument("-e", "--expansion", dest="expansion", action="store", required=False, default=25,
-                         type=int, help="Expansion factor for images. [Default = 25]")
-    options.add_argument("-p", "--precision", dest="precision", action="store", default="32",
-                        choices=["16-mixed", "bf16-mixed", "16-true", "bf16-true", "32", "64"],
-                        help="Precision for training. [Default = bf16-mixed]")
-    options.add_argument("-d", "--device", dest="device", action="store", required=False, default="cpu",
-                         help="Device to be used for training [default='cpu']")
-    options.add_argument("-bs", "--batch_size", dest="batch_size", action="store", required=False, default=32,
-                         type=int, help="Batch size for training. [Default = 32]")
-    options.add_argument("-w", "--workers", dest="workers", action="store", required=False, default=0,
-                         type=int, help="Number of workers for training. [Default = 0]")
+    options.add_argument(
+        "-s",
+        "--size",
+        dest="size",
+        action="store",
+        required=False,
+        default=(256, 256),
+        type=int,
+        nargs="+",
+        help="Size of images for training. [Default = (256, 256)]",
+    )
+    options.add_argument(
+        "-rf",
+        "--resizing_factor",
+        dest="resizing_factor",
+        action="store",
+        required=False,
+        default=0.6,
+        type=float,
+        help="Resizing factor for images. [Default = 0.6]",
+    )
+    options.add_argument(
+        "-e",
+        "--expansion",
+        dest="expansion",
+        action="store",
+        required=False,
+        default=25,
+        type=int,
+        help="Expansion factor for images. [Default = 25]",
+    )
+    options.add_argument(
+        "-p",
+        "--precision",
+        dest="precision",
+        action="store",
+        default="32",
+        choices=["16-mixed", "bf16-mixed", "16-true", "bf16-true", "32", "64"],
+        help="Precision for training. [Default = bf16-mixed]",
+    )
+    options.add_argument(
+        "-d",
+        "--device",
+        dest="device",
+        action="store",
+        required=False,
+        default="cpu",
+        help="Device to be used for training [default='cpu']",
+    )
+    options.add_argument(
+        "-bs",
+        "--batch_size",
+        dest="batch_size",
+        action="store",
+        required=False,
+        default=4,
+        type=int,
+        help="Batch size for training. [Default = 4]",
+    )
+    options.add_argument(
+        "-w",
+        "--workers",
+        dest="workers",
+        action="store",
+        required=False,
+        default=0,
+        type=int,
+        help="Number of workers for training. [Default = 0]",
+    )
 
     # Tool output
     output = parser.add_argument_group(title="Output")
-    output.add_argument("-o", "--out", dest="out", action="store", required=True,
-                        help="Path to the output data folder")
+    output.add_argument(
+        "-o",
+        "--out",
+        dest="out",
+        action="store",
+        required=True,
+        help="Path to the output data folder",
+    )
 
     # Parse arguments
     args = parser.parse_args()
@@ -71,7 +149,9 @@ def get_args():
 
 def summarize(df_predictions):
     # Get micronuclei counts
-    df_predictions["micronuclei"] = df_predictions["score"].apply(lambda x: round(x) if x > 0.5 else 0)
+    df_predictions["micronuclei"] = df_predictions["score"].apply(
+        lambda x: round(x) if x > 0.5 else 0
+    )
 
     # Get dataset summary
     print("Calculating summary.")
@@ -94,15 +174,14 @@ def summarize(df_predictions):
 
 
 def main(args):
-    torch.set_float32_matmul_precision('high')
+    torch.set_float32_matmul_precision("high")
     # Load model
     print(f"Loading model     = {args.model}")
     print(f"Using device      = {args.device}")
-    model = torch.load(args.model, map_location=args.device)
+    model = torch.load(args.model, map_location=args.device, weights_only=False)
 
     # Predicting
-    trainer = pl.Trainer(precision=args.precision,
-                         accelerator=args.device)
+    trainer = pl.Trainer(precision=args.precision, accelerator=args.device)
 
     # Load data transformations
     transform = get_transforms(resize=args.size, training=False, prediction=True)
@@ -110,28 +189,29 @@ def main(args):
     # Dataset
     print(f"Loading image from = {args.image}")
     print(f"Loading mask from  = {args.mask}")
-    dataset = CINPrediction(args.image,
-                            args.mask,
-                            resizing_factor=args.resizing_factor,
-                            expansion=args.expansion,
-                            size=args.size,
-                            transform=transform)
+    dataset = CINPrediction(
+        args.image,
+        args.mask,
+        resizing_factor=args.resizing_factor,
+        expansion=args.expansion,
+        size=args.size,
+        transform=transform,
+    )
 
     # Dataloader
     print(f"Batch size         = {args.batch_size}")
-    dataloader = DataLoader(dataset, num_workers=args.workers, pin_memory=True, batch_size=args.batch_size)
+    dataloader = DataLoader(
+        dataset, num_workers=args.workers, pin_memory=True, batch_size=args.batch_size
+    )
 
     #  Getting predictions
     print("Predicting.")
     predictions = trainer.predict(model, dataloader)
     predictions = np.hstack(predictions)
-    ids = np.arange(1, len(predictions)+1)
+    ids = np.arange(1, len(predictions) + 1)
 
     # Create dictionary with results
-    dict_tmp = {
-        "image": ids,
-        "score": predictions
-    }
+    dict_tmp = {"image": ids, "score": predictions}
 
     # Create dataframes for predictions and for the summary
     df_predictions = pd.DataFrame.from_dict(dict_tmp)
@@ -140,9 +220,10 @@ def main(args):
     # Save output file
     print("Finished prediction. Saving output file.")
     args.out.mkdir(parents=True, exist_ok=True)
-    df_predictions.to_csv(args.out.joinpath(f"{args.mask.stem}_predictions.csv"), index=False)
+    df_predictions.to_csv(
+        args.out.joinpath(f"{args.mask.stem}_predictions.csv"), index=False
+    )
     df_summary.to_csv(args.out.joinpath(f"{args.mask.stem}_summary.csv"), index=True)
-
 
 
 if __name__ == "__main__":
@@ -153,4 +234,4 @@ if __name__ == "__main__":
     st = time.time()
     main(args)
     rt = time.time() - st
-    print(f"Script finish in {rt//60:.0f}m {rt%60:.0f}s")
+    print(f"Script finish in {rt // 60:.0f}m {rt % 60:.0f}s")

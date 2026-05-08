@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from turtle import width
 
 import numpy as np
@@ -13,13 +14,18 @@ from PIL import Image
 
 ################
 ## Set up variables and load content
+ROOT = Path(__file__).absolute().parent
+RESULTS = ROOT / "results"
+GIF = ROOT / "animation_micronuclei.gif"
+LOGO = ROOT / "logo.png"
+TEST_DATA = ROOT / "testdata.tar.gz"
+MODEL = ROOT / "micronuclai.pt"
 
 # Load an image from the file system (assumed to be in the same folder as this script).
-logo = Image.open("logo.png")
-gif_path = "./animation_micronuclei.gif"
+logo = Image.open(LOGO)
 
-# Use the full page instead of a narrow central column
-st.set_page_config(layout="centered")
+# Configure the page
+st.set_page_config(page_title="micronuclAI", layout="centered")
 
 # Custom CSS to inject into the Streamlit interface 000000 v0076b6
 button_css = """
@@ -83,9 +89,9 @@ with col1:
         """
     )
 with col2:
-    with open("testdata.tar.gz", "rb") as f:
+    with open(TEST_DATA, "rb") as f:
         st.download_button(
-            "Download test data", f, file_name="testdata.tar.gz", width="content"
+            "Download test data", f, file_name="testdata.tar.gz", width="stretch"
         )
 
 # Define input files
@@ -105,10 +111,10 @@ with col3:
     spacer = 3
     for _ in range(spacer):
         st.write("")  # These empty writes act as a spacer
-    submit_button = st.button("Run the script", key="submit_button_key")
+    submit_button = st.button(
+        "Run the script", key="submit_button_key", width="stretch"
+    )
 
-## Inference model file
-model_file = "micronuclai.pt"
 
 # Test 2: How to derive file paths from file uploads?
 if nuclei_image is not None:
@@ -116,7 +122,8 @@ if nuclei_image is not None:
     # temp_nucimage.name = 'nuclei_image.tif'
     temp_nucimage.write(nuclei_image.getbuffer())
 if mask_image is not None:
-    temp_maskimage = tempfile.NamedTemporaryFile(prefix="cin_inference.", dir=".")
+    # here I call it micronuclAI because prediction2 creates multiple files based on this name so in the end I will have micronuclAI_predictions.csv and micronuclAI_summary.csv
+    temp_maskimage = tempfile.NamedTemporaryFile(prefix="micronuclAI.", dir=".")
     # temp_maskimage.name = 'mask.tif'
     temp_maskimage.write(mask_image.getbuffer())
 
@@ -131,7 +138,7 @@ if submit_button:
     with placeholder.container():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
-            st.image(gif_path)
+            st.image(GIF)
             subprocess.run(
                 [
                     f"{sys.executable}",
@@ -141,11 +148,9 @@ if submit_button:
                     "-m",
                     temp_maskimage.name,
                     "-mod",
-                    model_file,
-                    "-d",
-                    "cpu",
+                    MODEL,
                     "-o",
-                    "./results",
+                    RESULTS,
                 ]
             )
             # Clear the GIF
@@ -153,41 +158,45 @@ if submit_button:
 
     ## Generate output files
     output_prefix = temp_maskimage.name.split("/")[-1]
-    pred_out = "cin_inference_predictions.csv"
-    sum_out = "cin_inference_summary.csv"
+    pred_out = f"micronuclAI_predictions.csv"
+    sum_out = f"micronuclAI_summary.csv"
 
     ## Result visualization
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Micronuclei distribution")
-        predictions = pd.read_csv("./results/" + pred_out)
+        predictions = pd.read_csv(RESULTS / pred_out)
+
         # Summarize the column micronuclei in predictions
         summary = predictions.groupby("micronuclei").size().reset_index(name="count")
+
         # Make the micronuclei column a factor variable
         summary["micronuclei"] = summary["micronuclei"].astype(str)
 
         # Create the Plotly bar chart
         fig = px.bar(summary, x="micronuclei", y="count", template="simple_white")
+
         # Make the bar color 0,119,182
         fig.update_traces(marker_color="rgb(0,119,182)")
 
         # Display the figure in the Streamlit app
-        st.plotly_chart(fig, use_container_width=True)
-        # st.write("This plot shows the distribution of micronuclei.")
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         st.subheader("Summary Table")
-        micro_sum = pd.read_csv("./results/" + sum_out)
+        micro_sum = pd.read_csv(RESULTS / sum_out)
         st.dataframe(micro_sum)
 
     col1, col2 = st.columns(2)
     with col1:
         c1, c2, c3 = st.columns(3)
         with c2:
-            with open("./results/" + pred_out) as f:
-                st.download_button("Download predictions", f, "text/csv")
+            with open(RESULTS / pred_out) as f:
+                st.download_button(
+                    "Download predictions", f, "text/csv", width="content"
+                )
     with col2:
         c1, c2, c3 = st.columns(3)
         with c2:
-            with open("./results/" + sum_out) as s:
-                st.download_button("Download summary", s, "text/csv")
+            with open(RESULTS / sum_out) as s:
+                st.download_button("Download summary", s, "text/csv", width="content")
