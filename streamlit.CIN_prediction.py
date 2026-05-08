@@ -1,23 +1,25 @@
 ## Import libraries
-import streamlit as st
-import pandas as pd
-import numpy as np
+import os
 import subprocess
 import sys
 import tempfile
-import os
-from PIL import Image
+from turtle import width
+
+import numpy as np
+import pandas as pd
 import plotly.express as px
+import streamlit as st
+from PIL import Image
 
 ################
 ## Set up variables and load content
 
 # Load an image from the file system (assumed to be in the same folder as this script).
-logo = Image.open('logo.png')
-gif_path = './animation_micronuclei.gif'
+logo = Image.open("logo.png")
+gif_path = "./animation_micronuclei.gif"
 
 # Use the full page instead of a narrow central column
-st.set_page_config(layout="wide")
+st.set_page_config(layout="centered")
 
 # Custom CSS to inject into the Streamlit interface 000000 v0076b6
 button_css = """
@@ -65,28 +67,40 @@ div.stDownloadButton > button:hover {
 st.markdown(button_css, unsafe_allow_html=True)
 
 # Display the logo at the top of the page.
-st.image(logo, use_column_width=True)
+st.image(logo, width="stretch")
 
 # Section to explain how to use the app.
-st.title("How to use this app")
+st.title("How to use this app", text_alignment="center")
 col1, col2 = st.columns(2)
 with col1:
-    st.write("This app is a showcase for MicronuclAI, it allows you to test our pretrained model with your own small test data")
-    st.write("For larger datasets please refer to the micronuclAI tool and try it locally on your machine.")
-    st.write("Check it out at: https://github.com/SchapiroLabor/micronuclAI")
+    st.write(
+        """
+        This app shocases micronuclAI, it allows you to test our pretrained model with your own small test data.
+
+        For larger datasets please refer to the CLI application of micronuclAI and try it locally on your machine or cluster.
+
+        Check the CLI implementation at: https://github.com/SchapiroLabor/micronuclAI
+        """
+    )
 with col2:
-    with open('testdata.tar.gz', 'rb') as f:
-        st.download_button('Download test data', f, file_name='testdata.tar.gz') 
+    with open("testdata.tar.gz", "rb") as f:
+        st.download_button(
+            "Download test data", f, file_name="testdata.tar.gz", width="content"
+        )
 
 # Define input files
 col1, col2, col3 = st.columns(3)
 with col1:
     nuclei_image = st.file_uploader(
-        "Upload a nuclear staining file:", accept_multiple_files=False, key="nuclei_image" )
-    
+        "Upload a nuclear staining file:",
+        accept_multiple_files=False,
+        key="nuclei_image",
+    )
+
 with col2:
     mask_image = st.file_uploader(
-        "Upload a nuclear mask file:", accept_multiple_files=False, key="nuclei_mask")
+        "Upload a nuclear mask file:", accept_multiple_files=False, key="nuclei_mask"
+    )
 with col3:
     spacer = 3
     for _ in range(spacer):
@@ -98,41 +112,47 @@ model_file = "micronuclai.pt"
 
 # Test 2: How to derive file paths from file uploads?
 if nuclei_image is not None:
-    temp_nucimage = tempfile.NamedTemporaryFile(
-        prefix="nuclei.", dir=".")
+    temp_nucimage = tempfile.NamedTemporaryFile(prefix="nuclei.", dir=".")
     # temp_nucimage.name = 'nuclei_image.tif'
     temp_nucimage.write(nuclei_image.getbuffer())
 if mask_image is not None:
-    temp_maskimage = tempfile.NamedTemporaryFile(
-        prefix="cin_inference.", dir=".")
+    temp_maskimage = tempfile.NamedTemporaryFile(prefix="cin_inference.", dir=".")
     # temp_maskimage.name = 'mask.tif'
     temp_maskimage.write(mask_image.getbuffer())
 
 ################
 ## Run inference when user clicks run button
-if 'count' not in st.session_state:
+if "count" not in st.session_state:
     st.session_state.count = 0
 
 placeholder = st.empty()
 # Run the inference script
 if submit_button:
     with placeholder.container():
-        col1, col2, col3 = st.columns([1,1,1])
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             st.image(gif_path)
-            subprocess.run([f"{sys.executable}",
-                        "prediction2.py",
-                        "-i", temp_nucimage.name,
-                        "-m", temp_maskimage.name,
-                        "-mod", model_file,
-                        "-d", "cpu",
-                        "-o", "./results"])
+            subprocess.run(
+                [
+                    f"{sys.executable}",
+                    "prediction2.py",
+                    "-i",
+                    temp_nucimage.name,
+                    "-m",
+                    temp_maskimage.name,
+                    "-mod",
+                    model_file,
+                    "-d",
+                    "cpu",
+                    "-o",
+                    "./results",
+                ]
+            )
             # Clear the GIF
             placeholder.empty()
 
-        
     ## Generate output files
-    output_prefix = temp_maskimage.name.split('/')[-1]
+    output_prefix = temp_maskimage.name.split("/")[-1]
     pred_out = "cin_inference_predictions.csv"
     sum_out = "cin_inference_summary.csv"
 
@@ -140,36 +160,34 @@ if submit_button:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Micronuclei distribution")
-        predictions = pd.read_csv("./results/"+pred_out)
+        predictions = pd.read_csv("./results/" + pred_out)
         # Summarize the column micronuclei in predictions
-        summary = predictions.groupby('micronuclei').size().reset_index(name='count')
+        summary = predictions.groupby("micronuclei").size().reset_index(name="count")
         # Make the micronuclei column a factor variable
-        summary['micronuclei'] = summary['micronuclei'].astype(str)
-        
+        summary["micronuclei"] = summary["micronuclei"].astype(str)
+
         # Create the Plotly bar chart
-        fig = px.bar(summary, x='micronuclei', y='count', template= "simple_white")
+        fig = px.bar(summary, x="micronuclei", y="count", template="simple_white")
         # Make the bar color 0,119,182
-        fig.update_traces(marker_color='rgb(0,119,182)')
+        fig.update_traces(marker_color="rgb(0,119,182)")
 
         # Display the figure in the Streamlit app
         st.plotly_chart(fig, use_container_width=True)
-        #st.write("This plot shows the distribution of micronuclei.")
+        # st.write("This plot shows the distribution of micronuclei.")
 
     with col2:
         st.subheader("Summary Table")
-        micro_sum = pd.read_csv("./results/"+sum_out)
+        micro_sum = pd.read_csv("./results/" + sum_out)
         st.dataframe(micro_sum)
 
     col1, col2 = st.columns(2)
     with col1:
-        c1,c2,c3 = st.columns(3)
+        c1, c2, c3 = st.columns(3)
         with c2:
-            with open("./results/"+pred_out) as f:
-                st.download_button('Download predictions', f, 'text/csv')
+            with open("./results/" + pred_out) as f:
+                st.download_button("Download predictions", f, "text/csv")
     with col2:
-        c1,c2,c3 = st.columns(3)
+        c1, c2, c3 = st.columns(3)
         with c2:
-            with open("./results/"+sum_out) as s:
-                st.download_button('Download summary', s, 'text/csv')
-
-
+            with open("./results/" + sum_out) as s:
+                st.download_button("Download summary", s, "text/csv")
