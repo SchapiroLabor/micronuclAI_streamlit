@@ -1,2 +1,5 @@
 .DS_Store
 .idea
+.gitattributes
+__pycache__/*
+pixi*
