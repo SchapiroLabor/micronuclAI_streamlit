@@ -1,10 +1,11 @@
+python=2.12.13
 mask2bbox==0.0.20
 numpy==1.26.4
 pandas==2.2.2
-Pillow
+Pillow==12.2.0
 plotly==5.19.0
 pytorch_lightning==2.0.9
-streamlit==1.35.0
-torch==2.0.1
-torchvision==0.15.2
+streamlit==1.57.0
+torch==2.11.0
+torchvision==0.26.0
 tqdm==4.66.1
