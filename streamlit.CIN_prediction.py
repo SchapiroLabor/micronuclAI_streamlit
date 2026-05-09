@@ -77,7 +77,7 @@ st.image(logo, width="stretch")
 
 # Section to explain how to use the app.
 st.title("How to use this app", text_alignment="center")
-col1, col2 = st.columns(2)
+col1, col2 = st.columns(2, vertical_alignment="center")
 with col1:
     st.write(
         """
@@ -95,7 +95,7 @@ with col2:
         )
 
 # Define input files
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3, vertical_alignment="center")
 with col1:
     nuclei_image = st.file_uploader(
         "Upload a nuclear staining file:",
@@ -108,23 +108,20 @@ with col2:
         "Upload a nuclear mask file:", accept_multiple_files=False, key="nuclei_mask"
     )
 with col3:
-    spacer = 3
-    for _ in range(spacer):
-        st.write("")  # These empty writes act as a spacer
     submit_button = st.button(
         "Run the script", key="submit_button_key", width="stretch"
     )
 
 
-# Test 2: How to derive file paths from file uploads?
+# Get the file paths from the uploaded file
+# Example of how to test temp_maskimage.name = 'mask.tif'
 if nuclei_image is not None:
     temp_nucimage = tempfile.NamedTemporaryFile(prefix="nuclei.", dir=".")
-    # temp_nucimage.name = 'nuclei_image.tif'
     temp_nucimage.write(nuclei_image.getbuffer())
+
 if mask_image is not None:
     # here I call it micronuclAI because prediction2 creates multiple files based on this name so in the end I will have micronuclAI_predictions.csv and micronuclAI_summary.csv
     temp_maskimage = tempfile.NamedTemporaryFile(prefix="micronuclAI.", dir=".")
-    # temp_maskimage.name = 'mask.tif'
     temp_maskimage.write(mask_image.getbuffer())
 
 ################
@@ -164,7 +161,8 @@ if submit_button:
     ## Result visualization
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Micronuclei distribution")
+        # Displays the resulting distribution plot
+        st.subheader("Micronuclei distribution", text_alignment="center")
         predictions = pd.read_csv(RESULTS / pred_out)
 
         # Summarize the column micronuclei in predictions
@@ -183,20 +181,16 @@ if submit_button:
         st.plotly_chart(fig, width="stretch")
 
     with col2:
-        st.subheader("Summary Table")
+        # Displays the results summary table
+        st.subheader("Summary Table", text_alignment="center")
         micro_sum = pd.read_csv(RESULTS / sum_out)
         st.dataframe(micro_sum)
 
-    col1, col2 = st.columns(2)
+    # This last part tries to balance the output
+    col1, col2 = st.columns(2, vertical_alignment="center")
     with col1:
-        c1, c2, c3 = st.columns(3)
-        with c2:
-            with open(RESULTS / pred_out) as f:
-                st.download_button(
-                    "Download predictions", f, "text/csv", width="content"
-                )
+        with open(RESULTS / pred_out) as f:
+            st.download_button("Download predictions", f, "text/csv", width="stretch")
     with col2:
-        c1, c2, c3 = st.columns(3)
-        with c2:
-            with open(RESULTS / sum_out) as s:
-                st.download_button("Download summary", s, "text/csv", width="content")
+        with open(RESULTS / sum_out) as s:
+            st.download_button("Download summary", s, "text/csv", width="stretch")
