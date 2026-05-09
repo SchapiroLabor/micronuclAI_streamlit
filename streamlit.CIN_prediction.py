@@ -125,61 +125,110 @@ if mask_image is not None:
 
 ################
 ## Run inference when user clicks run button
-if "count" not in st.session_state:
-    st.session_state.count = 0
+
+if "results_ready" not in st.session_state:
+    st.session_state.results_ready = False
+
+if "predictions_df" not in st.session_state:
+    st.session_state.predictions_df = None
+
+if "chart_summary_df" not in st.session_state:
+    st.session_state.chart_summary_df = None
+
+if "micro_sum_df" not in st.session_state:
+    st.session_state.micro_sum_df = None
+
+if "predictions_csv" not in st.session_state:
+    st.session_state.predictions_csv = None
+
+if "summary_csv" not in st.session_state:
+    st.session_state.summary_csv = None
 
 placeholder = st.empty()
-# Run the inference script
+
 if submit_button:
-    with placeholder.container():
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            st.image(GIF)
-            subprocess.run(
-                [
-                    f"{sys.executable}",
-                    "prediction2.py",
-                    "-i",
-                    temp_nucimage.name,
-                    "-m",
-                    temp_maskimage.name,
-                    "-mod",
-                    MODEL,
-                    "-o",
-                    RESULTS,
-                ]
-            )
-            # Clear the GIF
-            placeholder.empty()
+    if nuclei_image is None or mask_image is None:
+        st.warning(
+            "Please upload both a nuclear staining file and a nuclear mask file."
+        )
+    else:
+        with placeholder.container():
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                st.image(GIF)
 
-    ## Generate output files
-    output_prefix = temp_maskimage.name.split("/")[-1]
-    pred_out = f"micronuclAI_predictions.csv"
-    sum_out = f"micronuclAI_summary.csv"
+        subprocess.run(
+            [
+                f"{sys.executable}",
+                "prediction2.py",
+                "-i",
+                temp_nucimage.name,
+                "-m",
+                temp_maskimage.name,
+                "-mod",
+                MODEL,
+                "-o",
+                RESULTS,
+            ]
+        )
 
-    ## Result visualization
-    col1, col2 = st.columns(2)
-    with col1:
-        # Displays the resulting distribution plot
-        st.subheader("Micronuclei distribution", text_alignment="center")
+        placeholder.empty()
+
+        pred_out = "micronuclAI_predictions.csv"
+        sum_out = "micronuclAI_summary.csv"
+
         predictions = pd.read_csv(RESULTS / pred_out)
-        summary = predictions.groupby("micronuclei").size().reset_index(name="count")
-        summary["micronuclei"] = summary["micronuclei"].astype(str)
-        fig = px.bar(summary, x="micronuclei", y="count", template="simple_white")
+        micro_sum = pd.read_csv(RESULTS / sum_out)
+
+        chart_summary = (
+            predictions.groupby("micronuclei").size().reset_index(name="count")
+        )
+        chart_summary["micronuclei"] = chart_summary["micronuclei"].astype(str)
+
+        st.session_state.predictions_df = predictions
+        st.session_state.chart_summary_df = chart_summary
+        st.session_state.micro_sum_df = micro_sum
+        st.session_state.predictions_csv = predictions.to_csv(index=False).encode(
+            "utf-8"
+        )
+        st.session_state.summary_csv = micro_sum.to_csv(index=False).encode("utf-8")
+        st.session_state.results_ready = True
+
+## Result visualization
+if st.session_state.results_ready:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Micronuclei distribution", text_alignment="center")
+        fig = px.bar(
+            st.session_state.chart_summary_df,
+            x="micronuclei",
+            y="count",
+            template="simple_white",
+        )
         fig.update_traces(marker_color="rgb(0,119,182)")
         st.plotly_chart(fig, width="stretch")
 
     with col2:
-        # Displays the results summary table
         st.subheader("Summary Table", text_alignment="center")
-        micro_sum = pd.read_csv(RESULTS / sum_out)
-        st.dataframe(micro_sum)
+        st.dataframe(st.session_state.micro_sum_df)
 
-    # This last part tries to balance the output
     col1, col2 = st.columns(2, vertical_alignment="center")
+
     with col1:
-        with open(RESULTS / pred_out) as f:
-            st.download_button("Download predictions", f, "text/csv", width="stretch")
+        st.download_button(
+            label="Download predictions",
+            data=st.session_state.predictions_csv,
+            file_name="micronuclAI_predictions.csv",
+            mime="text/csv",
+            width="stretch",
+        )
+
     with col2:
-        with open(RESULTS / sum_out) as s:
-            st.download_button("Download summary", s, "text/csv", width="stretch")
+        st.download_button(
+            label="Download summary",
+            data=st.session_state.summary_csv,
+            file_name="micronuclAI_summary.csv",
+            mime="text/csv",
+            width="stretch",
+        )
