@@ -164,20 +164,10 @@ if submit_button:
         # Displays the resulting distribution plot
         st.subheader("Micronuclei distribution", text_alignment="center")
         predictions = pd.read_csv(RESULTS / pred_out)
-
-        # Summarize the column micronuclei in predictions
         summary = predictions.groupby("micronuclei").size().reset_index(name="count")
-
-        # Make the micronuclei column a factor variable
         summary["micronuclei"] = summary["micronuclei"].astype(str)
-
-        # Create the Plotly bar chart
         fig = px.bar(summary, x="micronuclei", y="count", template="simple_white")
-
-        # Make the bar color 0,119,182
         fig.update_traces(marker_color="rgb(0,119,182)")
-
-        # Display the figure in the Streamlit app
         st.plotly_chart(fig, width="stretch")
 
     with col2:
